@@ -1,17 +1,20 @@
 -- THIS IS A HORRIBLE FILE. NEED TO CREATE A DAG
 
+DROP DATABASE IF EXISTS pokemon;
 CREATE DATABASE pokemon;
 \c pokemon postgres
 
-CREATE TABLE regions (
-  id INTEGER NOT NULL,
-  identifier VARCHAR(16) NOT NULL,
-  PRIMARY KEY (id)
-);
+
 
 CREATE TABLE super_contest_effects (
   id INTEGER NOT NULL,
   appeal SMALLINT NOT NULL,
+  PRIMARY KEY (id)
+);
+
+CREATE TABLE regions (
+  id INTEGER NOT NULL,
+  identifier VARCHAR(16) NOT NULL,
   PRIMARY KEY (id)
 );
 
@@ -24,6 +27,7 @@ CREATE TABLE pokedexes (
   FOREIGN KEY(region_id) REFERENCES regions (id),
   CHECK (is_main_series IN (True, False))
 );
+
 
 CREATE TABLE generations (
   id INTEGER NOT NULL,
@@ -189,11 +193,6 @@ CREATE TABLE conquest_move_effects (
   PRIMARY KEY (id)
 );
 
-CREATE TABLE conquest_warrior_archetypes (
-  id INTEGER NOT NULL,
-  identifier VARCHAR(15) NOT NULL,
-  PRIMARY KEY (id)
-);
 
 CREATE TABLE conquest_episode_names (
   episode_id INTEGER NOT NULL,
@@ -211,6 +210,15 @@ CREATE TABLE conquest_episode_warriors (
   FOREIGN KEY(warrior_id) REFERENCES conquest_warriors (id)
 );
 
+
+CREATE TABLE conquest_kingdoms (
+  id INTEGER NOT NULL,
+  identifier VARCHAR(9) NOT NULL,
+  type_id INTEGER NOT NULL,
+  PRIMARY KEY (id),
+  FOREIGN KEY(type_id) REFERENCES types (id)
+);
+
 CREATE TABLE conquest_kingdom_names (
   kingdom_id INTEGER NOT NULL,
   local_language_id INTEGER NOT NULL,
@@ -219,20 +227,13 @@ CREATE TABLE conquest_kingdom_names (
   FOREIGN KEY(kingdom_id) REFERENCES conquest_kingdoms (id),
   FOREIGN KEY(local_language_id) REFERENCES languages (id)
 );
-CREATE TABLE conquest_kingdoms (
+
+CREATE TABLE conquest_move_displacements (
   id INTEGER NOT NULL,
-  identifier VARCHAR(9) NOT NULL,
-  type_id INTEGER NOT NULL,
+  identifier VARCHAR(18) NOT NULL,
+  affects_target BOOLEAN NOT NULL,
   PRIMARY KEY (id),
-  FOREIGN KEY(type_id) REFERENCES types (id)
-);
-CREATE TABLE conquest_max_links (
-  warrior_rank_id INTEGER NOT NULL,
-  pokemon_species_id INTEGER NOT NULL,
-  max_link INTEGER NOT NULL,
-  PRIMARY KEY (warrior_rank_id, pokemon_species_id),
-  FOREIGN KEY(warrior_rank_id) REFERENCES conquest_warrior_ranks (id),
-  FOREIGN KEY(pokemon_species_id) REFERENCES pokemon_species (id)
+  CHECK (affects_target IN (True, False))
 );
 CREATE TABLE conquest_move_data (
   move_id INTEGER NOT NULL,
@@ -258,13 +259,7 @@ CREATE TABLE conquest_move_displacement_prose (
   FOREIGN KEY(move_displacement_id) REFERENCES conquest_move_displacements (id),
   FOREIGN KEY(local_language_id) REFERENCES languages (id)
 );
-CREATE TABLE conquest_move_displacements (
-  id INTEGER NOT NULL,
-  identifier VARCHAR(18) NOT NULL,
-  affects_target BOOLEAN NOT NULL,
-  PRIMARY KEY (id),
-  CHECK (affects_target IN (True, False))
-);
+
 CREATE TABLE conquest_move_effect_prose (
   conquest_move_effect_id INTEGER NOT NULL,
   local_language_id INTEGER NOT NULL,
@@ -286,46 +281,17 @@ CREATE TABLE conquest_move_range_prose (
   FOREIGN KEY(local_language_id) REFERENCES languages (id)
 );
 
-CREATE TABLE conquest_pokemon_abilities (
-  pokemon_species_id INTEGER NOT NULL,
-  slot INTEGER NOT NULL,
-  ability_id INTEGER NOT NULL,
-  PRIMARY KEY (pokemon_species_id, slot),
-  FOREIGN KEY(pokemon_species_id) REFERENCES pokemon_species (id),
-  FOREIGN KEY(ability_id) REFERENCES abilities (id)
+
+
+CREATE TABLE conquest_stats (
+  id INTEGER NOT NULL,
+  identifier VARCHAR(7) NOT NULL,
+  is_base BOOLEAN NOT NULL,
+  PRIMARY KEY (id),
+  CHECK (is_base IN (True, False))
 );
-CREATE TABLE conquest_pokemon_evolution (
-  evolved_species_id INTEGER NOT NULL,
-  required_stat_id INTEGER,
-  minimum_stat INTEGER,
-  minimum_link INTEGER,
-  kingdom_id INTEGER,
-  warrior_gender_id INTEGER,
-  item_id INTEGER,
-  recruiting_ko_required BOOLEAN NOT NULL,
-  PRIMARY KEY (evolved_species_id),
-  FOREIGN KEY(evolved_species_id) REFERENCES pokemon_species (id),
-  FOREIGN KEY(required_stat_id) REFERENCES conquest_stats (id),
-  FOREIGN KEY(kingdom_id) REFERENCES conquest_kingdoms (id),
-  FOREIGN KEY(warrior_gender_id) REFERENCES genders (id),
-  FOREIGN KEY(item_id) REFERENCES items (id),
-  CHECK (recruiting_ko_required IN (0, 1))
-);
-CREATE TABLE conquest_pokemon_moves (
-  pokemon_species_id INTEGER NOT NULL,
-  move_id INTEGER NOT NULL,
-  PRIMARY KEY (pokemon_species_id),
-  FOREIGN KEY(pokemon_species_id) REFERENCES pokemon_species (id),
-  FOREIGN KEY(move_id) REFERENCES moves (id)
-);
-CREATE TABLE conquest_pokemon_stats (
-  pokemon_species_id INTEGER NOT NULL,
-  conquest_stat_id INTEGER NOT NULL,
-  base_stat INTEGER NOT NULL,
-  PRIMARY KEY (pokemon_species_id, conquest_stat_id),
-  FOREIGN KEY(pokemon_species_id) REFERENCES pokemon_species (id),
-  FOREIGN KEY(conquest_stat_id) REFERENCES conquest_stats (id)
-);
+
+
 CREATE TABLE conquest_stat_names (
   conquest_stat_id INTEGER NOT NULL,
   local_language_id INTEGER NOT NULL,
@@ -334,27 +300,24 @@ CREATE TABLE conquest_stat_names (
   FOREIGN KEY(conquest_stat_id) REFERENCES conquest_stats (id),
   FOREIGN KEY(local_language_id) REFERENCES languages (id)
 );
-CREATE TABLE conquest_stats (
+
+CREATE TABLE conquest_warrior_archetypes (
   id INTEGER NOT NULL,
-  identifier VARCHAR(7) NOT NULL,
-  is_base BOOLEAN NOT NULL,
+  identifier VARCHAR(15) NOT NULL,
+  PRIMARY KEY (id)
+);
+
+
+CREATE TABLE conquest_warriors (
+  id INTEGER NOT NULL,
+  identifier VARCHAR(10) NOT NULL,
+  gender_id INTEGER NOT NULL,
+  archetype_id INTEGER,
   PRIMARY KEY (id),
-  CHECK (is_base IN (0, 1))
+  FOREIGN KEY(gender_id) REFERENCES genders (id),
+  FOREIGN KEY(archetype_id) REFERENCES conquest_warrior_archetypes (id)
 );
-CREATE TABLE conquest_transformation_pokemon (
-  transformation_id INTEGER NOT NULL,
-  pokemon_species_id INTEGER NOT NULL,
-  PRIMARY KEY (transformation_id, pokemon_species_id),
-  FOREIGN KEY(transformation_id) REFERENCES conquest_warrior_transformation (transformed_warrior_rank_id),
-  FOREIGN KEY(pokemon_species_id) REFERENCES pokemon_species (id)
-);
-CREATE TABLE conquest_transformation_warriors (
-  transformation_id INTEGER NOT NULL,
-  present_warrior_id INTEGER NOT NULL,
-  PRIMARY KEY (transformation_id, present_warrior_id),
-  FOREIGN KEY(transformation_id) REFERENCES conquest_warrior_transformation (transformed_warrior_rank_id),
-  FOREIGN KEY(present_warrior_id) REFERENCES conquest_warriors (id)
-);
+
 
 CREATE TABLE conquest_warrior_names (
   warrior_id INTEGER NOT NULL,
@@ -364,14 +327,14 @@ CREATE TABLE conquest_warrior_names (
   FOREIGN KEY(warrior_id) REFERENCES conquest_warriors (id),
   FOREIGN KEY(local_language_id) REFERENCES languages (id)
 );
-CREATE TABLE conquest_warrior_rank_stat_map (
-  warrior_rank_id INTEGER NOT NULL,
-  warrior_stat_id INTEGER NOT NULL,
-  base_stat INTEGER NOT NULL,
-  PRIMARY KEY (warrior_rank_id, warrior_stat_id),
-  FOREIGN KEY(warrior_rank_id) REFERENCES conquest_warrior_ranks (id),
-  FOREIGN KEY(warrior_stat_id) REFERENCES conquest_warrior_stats (id)
+
+CREATE TABLE conquest_warrior_skills (
+  id INTEGER NOT NULL,
+  identifier VARCHAR(15) NOT NULL,
+  PRIMARY KEY (id)
 );
+
+
 CREATE TABLE conquest_warrior_ranks (
   id INTEGER NOT NULL,
   warrior_id INTEGER NOT NULL,
@@ -390,11 +353,7 @@ CREATE TABLE conquest_warrior_skill_names (
   FOREIGN KEY(skill_id) REFERENCES conquest_warrior_skills (id),
   FOREIGN KEY(local_language_id) REFERENCES languages (id)
 );
-CREATE TABLE conquest_warrior_skills (
-  id INTEGER NOT NULL,
-  identifier VARCHAR(15) NOT NULL,
-  PRIMARY KEY (id)
-);
+
 CREATE TABLE conquest_warrior_specialties (
   warrior_id INTEGER NOT NULL,
   type_id INTEGER NOT NULL,
@@ -403,6 +362,21 @@ CREATE TABLE conquest_warrior_specialties (
   FOREIGN KEY(warrior_id) REFERENCES conquest_warriors (id),
   FOREIGN KEY(type_id) REFERENCES types (id)
 );
+CREATE TABLE conquest_warrior_stats (
+  id INTEGER NOT NULL,
+  identifier VARCHAR(8) NOT NULL,
+  PRIMARY KEY (id)
+);
+
+CREATE TABLE conquest_warrior_rank_stat_map (
+  warrior_rank_id INTEGER NOT NULL,
+  warrior_stat_id INTEGER NOT NULL,
+  base_stat INTEGER NOT NULL,
+  PRIMARY KEY (warrior_rank_id, warrior_stat_id),
+  FOREIGN KEY(warrior_rank_id) REFERENCES conquest_warrior_ranks (id),
+  FOREIGN KEY(warrior_stat_id) REFERENCES conquest_warrior_stats (id)
+);
+
 CREATE TABLE conquest_warrior_stat_names (
   warrior_stat_id INTEGER NOT NULL,
   local_language_id INTEGER NOT NULL,
@@ -411,11 +385,8 @@ CREATE TABLE conquest_warrior_stat_names (
   FOREIGN KEY(warrior_stat_id) REFERENCES conquest_warrior_stats (id),
   FOREIGN KEY(local_language_id) REFERENCES languages (id)
 );
-CREATE TABLE conquest_warrior_stats (
-  id INTEGER NOT NULL,
-  identifier VARCHAR(8) NOT NULL,
-  PRIMARY KEY (id)
-);
+
+
 CREATE TABLE conquest_warrior_transformation (
   transformed_warrior_rank_id INTEGER NOT NULL,
   is_automatic BOOLEAN NOT NULL,
@@ -435,15 +406,23 @@ CREATE TABLE conquest_warrior_transformation (
   FOREIGN KEY(distant_warrior_id) REFERENCES conquest_warriors (id),
   FOREIGN KEY(collection_type_id) REFERENCES types (id)
 );
-CREATE TABLE conquest_warriors (
-  id INTEGER NOT NULL,
-  identifier VARCHAR(10) NOT NULL,
-  gender_id INTEGER NOT NULL,
-  archetype_id INTEGER,
-  PRIMARY KEY (id),
-  FOREIGN KEY(gender_id) REFERENCES genders (id),
-  FOREIGN KEY(archetype_id) REFERENCES conquest_warrior_archetypes (id)
+
+CREATE TABLE conquest_transformation_pokemon (
+  transformation_id INTEGER NOT NULL,
+  pokemon_species_id INTEGER NOT NULL,
+  PRIMARY KEY (transformation_id, pokemon_species_id),
+  FOREIGN KEY(transformation_id) REFERENCES conquest_warrior_transformation (transformed_warrior_rank_id),
+  FOREIGN KEY(pokemon_species_id) REFERENCES pokemon_species (id)
 );
+
+CREATE TABLE conquest_transformation_warriors (
+  transformation_id INTEGER NOT NULL,
+  present_warrior_id INTEGER NOT NULL,
+  PRIMARY KEY (transformation_id, present_warrior_id),
+  FOREIGN KEY(transformation_id) REFERENCES conquest_warrior_transformation (transformed_warrior_rank_id),
+  FOREIGN KEY(present_warrior_id) REFERENCES conquest_warriors (id)
+);
+
 CREATE TABLE contest_combos (
   first_move_id INTEGER NOT NULL,
   second_move_id INTEGER NOT NULL,
@@ -451,6 +430,14 @@ CREATE TABLE contest_combos (
   FOREIGN KEY(first_move_id) REFERENCES moves (id),
   FOREIGN KEY(second_move_id) REFERENCES moves (id)
 );
+
+CREATE TABLE contest_effects (
+  id INTEGER NOT NULL,
+  appeal SMALLINT NOT NULL,
+  jam SMALLINT NOT NULL,
+  PRIMARY KEY (id)
+);
+
 CREATE TABLE contest_effect_prose (
   contest_effect_id INTEGER NOT NULL,
   local_language_id INTEGER NOT NULL,
@@ -460,12 +447,7 @@ CREATE TABLE contest_effect_prose (
   FOREIGN KEY(contest_effect_id) REFERENCES contest_effects (id),
   FOREIGN KEY(local_language_id) REFERENCES languages (id)
 );
-CREATE TABLE contest_effects (
-  id INTEGER NOT NULL,
-  appeal SMALLINT NOT NULL,
-  jam SMALLINT NOT NULL,
-  PRIMARY KEY (id)
-);
+
 CREATE TABLE contest_type_names (
   contest_type_id INTEGER NOT NULL,
   local_language_id INTEGER NOT NULL,
@@ -477,6 +459,12 @@ CREATE TABLE contest_type_names (
   FOREIGN KEY(local_language_id) REFERENCES languages (id)
 );
 
+CREATE TABLE egg_groups (
+  id INTEGER NOT NULL,
+  identifier VARCHAR(16) NOT NULL,
+  PRIMARY KEY (id)
+);
+
 CREATE TABLE egg_group_prose (
   egg_group_id INTEGER NOT NULL,
   local_language_id INTEGER NOT NULL,
@@ -485,11 +473,13 @@ CREATE TABLE egg_group_prose (
   FOREIGN KEY(egg_group_id) REFERENCES egg_groups (id),
   FOREIGN KEY(local_language_id) REFERENCES languages (id)
 );
-CREATE TABLE egg_groups (
+
+CREATE TABLE encounter_conditions (
   id INTEGER NOT NULL,
-  identifier VARCHAR(16) NOT NULL,
+  identifier VARCHAR(64) NOT NULL,
   PRIMARY KEY (id)
 );
+
 CREATE TABLE encounter_condition_prose (
   encounter_condition_id INTEGER NOT NULL,
   local_language_id INTEGER NOT NULL,
@@ -522,19 +512,8 @@ CREATE TABLE encounter_condition_values (
   FOREIGN KEY(encounter_condition_id) REFERENCES encounter_conditions (id),
   CHECK (is_default IN (0, 1))
 );
-CREATE TABLE encounter_conditions (
-  id INTEGER NOT NULL,
-  identifier VARCHAR(64) NOT NULL,
-  PRIMARY KEY (id)
-);
-CREATE TABLE encounter_method_prose (
-  encounter_method_id INTEGER NOT NULL,
-  local_language_id INTEGER NOT NULL,
-  name VARCHAR(64) NOT NULL,
-  PRIMARY KEY (encounter_method_id, local_language_id),
-  FOREIGN KEY(encounter_method_id) REFERENCES encounter_methods (id),
-  FOREIGN KEY(local_language_id) REFERENCES languages (id)
-);
+
+
 CREATE TABLE encounter_methods (
   id INTEGER NOT NULL,
   identifier VARCHAR(16) NOT NULL,
@@ -543,6 +522,16 @@ CREATE TABLE encounter_methods (
   UNIQUE (identifier),
   UNIQUE ("order")
 );
+
+CREATE TABLE encounter_method_prose (
+  encounter_method_id INTEGER NOT NULL,
+  local_language_id INTEGER NOT NULL,
+  name VARCHAR(64) NOT NULL,
+  PRIMARY KEY (encounter_method_id, local_language_id),
+  FOREIGN KEY(encounter_method_id) REFERENCES encounter_methods (id),
+  FOREIGN KEY(local_language_id) REFERENCES languages (id)
+);
+
 CREATE TABLE encounter_slots (
   id INTEGER NOT NULL,
   version_group_id INTEGER NOT NULL,
@@ -567,6 +556,12 @@ CREATE TABLE encounters (
   FOREIGN KEY(encounter_slot_id) REFERENCES encounter_slots (id),
   FOREIGN KEY(pokemon_id) REFERENCES pokemon (id)
 );
+CREATE TABLE evolution_triggers (
+  id INTEGER NOT NULL,
+  identifier VARCHAR(16) NOT NULL,
+  PRIMARY KEY (id)
+);
+
 CREATE TABLE evolution_chains (
   id INTEGER NOT NULL,
   baby_trigger_item_id INTEGER,
@@ -581,11 +576,7 @@ CREATE TABLE evolution_trigger_prose (
   FOREIGN KEY(evolution_trigger_id) REFERENCES evolution_triggers (id),
   FOREIGN KEY(local_language_id) REFERENCES languages (id)
 );
-CREATE TABLE evolution_triggers (
-  id INTEGER NOT NULL,
-  identifier VARCHAR(16) NOT NULL,
-  PRIMARY KEY (id)
-);
+
 CREATE TABLE experience (
   growth_rate_id INTEGER NOT NULL,
   level INTEGER NOT NULL,
@@ -607,6 +598,14 @@ CREATE TABLE generation_names (
   FOREIGN KEY(local_language_id) REFERENCES languages (id)
 );
 
+
+CREATE TABLE growth_rates (
+  id INTEGER NOT NULL,
+  identifier VARCHAR(20) NOT NULL,
+  formula VARCHAR(500) NOT NULL,
+  PRIMARY KEY (id)
+);
+
 CREATE TABLE growth_rate_prose (
   growth_rate_id INTEGER NOT NULL,
   local_language_id INTEGER NOT NULL,
@@ -615,12 +614,7 @@ CREATE TABLE growth_rate_prose (
   FOREIGN KEY(growth_rate_id) REFERENCES growth_rates (id),
   FOREIGN KEY(local_language_id) REFERENCES languages (id)
 );
-CREATE TABLE growth_rates (
-  id INTEGER NOT NULL,
-  identifier VARCHAR(20) NOT NULL,
-  formula VARCHAR(500) NOT NULL,
-  PRIMARY KEY (id)
-);
+
 CREATE TABLE item_categories (
   id INTEGER NOT NULL,
   pocket_id INTEGER NOT NULL,
@@ -636,13 +630,14 @@ CREATE TABLE item_category_prose (
   FOREIGN KEY(item_category_id) REFERENCES item_categories (id),
   FOREIGN KEY(local_language_id) REFERENCES languages (id)
 );
-CREATE TABLE item_flag_map (
-  item_id INTEGER NOT NULL,
-  item_flag_id INTEGER NOT NULL,
-  PRIMARY KEY (item_id, item_flag_id),
-  FOREIGN KEY(item_id) REFERENCES items (id),
-  FOREIGN KEY(item_flag_id) REFERENCES item_flags (id)
+
+CREATE TABLE item_flags (
+  id INTEGER NOT NULL,
+  identifier VARCHAR(24) NOT NULL,
+  PRIMARY KEY (id)
 );
+
+
 CREATE TABLE item_flag_prose (
   item_flag_id INTEGER NOT NULL,
   local_language_id INTEGER NOT NULL,
@@ -652,11 +647,35 @@ CREATE TABLE item_flag_prose (
   FOREIGN KEY(item_flag_id) REFERENCES item_flags (id),
   FOREIGN KEY(local_language_id) REFERENCES languages (id)
 );
-CREATE TABLE item_flags (
+
+
+
+CREATE TABLE item_fling_effects (
   id INTEGER NOT NULL,
-  identifier VARCHAR(24) NOT NULL,
   PRIMARY KEY (id)
 );
+
+CREATE TABLE items (
+  id INTEGER NOT NULL,
+  identifier VARCHAR(20) NOT NULL,
+  category_id INTEGER NOT NULL,
+  cost INTEGER NOT NULL,
+  fling_power INTEGER,
+  fling_effect_id INTEGER,
+  PRIMARY KEY (id),
+  FOREIGN KEY(category_id) REFERENCES item_categories (id),
+  FOREIGN KEY(fling_effect_id) REFERENCES item_fling_effects (id)
+);
+
+CREATE TABLE item_flag_map (
+  item_id INTEGER NOT NULL,
+  item_flag_id INTEGER NOT NULL,
+  PRIMARY KEY (item_id, item_flag_id),
+  FOREIGN KEY(item_id) REFERENCES items (id),
+  FOREIGN KEY(item_flag_id) REFERENCES item_flags (id)
+);
+
+
 CREATE TABLE item_flavor_summaries (
   item_id INTEGER NOT NULL,
   local_language_id INTEGER NOT NULL,
@@ -675,6 +694,7 @@ CREATE TABLE item_flavor_text (
   FOREIGN KEY(version_group_id) REFERENCES version_groups (id),
   FOREIGN KEY(language_id) REFERENCES languages (id)
 );
+
 CREATE TABLE item_fling_effect_prose (
   item_fling_effect_id INTEGER NOT NULL,
   local_language_id INTEGER NOT NULL,
@@ -683,10 +703,7 @@ CREATE TABLE item_fling_effect_prose (
   FOREIGN KEY(item_fling_effect_id) REFERENCES item_fling_effects (id),
   FOREIGN KEY(local_language_id) REFERENCES languages (id)
 );
-CREATE TABLE item_fling_effects (
-  id INTEGER NOT NULL,
-  PRIMARY KEY (id)
-);
+
 CREATE TABLE item_game_indices (
   item_id INTEGER NOT NULL,
   generation_id INTEGER NOT NULL,
@@ -725,17 +742,7 @@ CREATE TABLE item_prose (
   FOREIGN KEY(item_id) REFERENCES items (id),
   FOREIGN KEY(local_language_id) REFERENCES languages (id)
 );
-CREATE TABLE items (
-  id INTEGER NOT NULL,
-  identifier VARCHAR(20) NOT NULL,
-  category_id INTEGER NOT NULL,
-  cost INTEGER NOT NULL,
-  fling_power INTEGER,
-  fling_effect_id INTEGER,
-  PRIMARY KEY (id),
-  FOREIGN KEY(category_id) REFERENCES item_categories (id),
-  FOREIGN KEY(fling_effect_id) REFERENCES item_fling_effects (id)
-);
+
 CREATE TABLE language_names (
   language_id INTEGER NOT NULL,
   local_language_id INTEGER NOT NULL,
@@ -1365,6 +1372,57 @@ CREATE TABLE pokemon_species (
   CHECK (has_gender_differences IN (True, False)),
   FOREIGN KEY(growth_rate_id) REFERENCES growth_rates (id),
   CHECK (forms_switchable IN (True, False))
+);
+
+CREATE TABLE conquest_pokemon_stats (
+  pokemon_species_id INTEGER NOT NULL,
+  conquest_stat_id INTEGER NOT NULL,
+  base_stat INTEGER NOT NULL,
+  PRIMARY KEY (pokemon_species_id, conquest_stat_id),
+  FOREIGN KEY(pokemon_species_id) REFERENCES pokemon_species (id),
+  FOREIGN KEY(conquest_stat_id) REFERENCES conquest_stats (id)
+);
+
+CREATE TABLE conquest_pokemon_abilities (
+  pokemon_species_id INTEGER NOT NULL,
+  slot INTEGER NOT NULL,
+  ability_id INTEGER NOT NULL,
+  PRIMARY KEY (pokemon_species_id, slot),
+  FOREIGN KEY(pokemon_species_id) REFERENCES pokemon_species (id),
+  FOREIGN KEY(ability_id) REFERENCES abilities (id)
+);
+CREATE TABLE conquest_pokemon_evolution (
+  evolved_species_id INTEGER NOT NULL,
+  required_stat_id INTEGER,
+  minimum_stat INTEGER,
+  minimum_link INTEGER,
+  kingdom_id INTEGER,
+  warrior_gender_id INTEGER,
+  item_id INTEGER,
+  recruiting_ko_required BOOLEAN NOT NULL,
+  PRIMARY KEY (evolved_species_id),
+  FOREIGN KEY(evolved_species_id) REFERENCES pokemon_species (id),
+  FOREIGN KEY(required_stat_id) REFERENCES conquest_stats (id),
+  FOREIGN KEY(kingdom_id) REFERENCES conquest_kingdoms (id),
+  FOREIGN KEY(warrior_gender_id) REFERENCES genders (id),
+  FOREIGN KEY(item_id) REFERENCES items (id),
+  CHECK (recruiting_ko_required IN (True, False))
+);
+CREATE TABLE conquest_pokemon_moves (
+  pokemon_species_id INTEGER NOT NULL,
+  move_id INTEGER NOT NULL,
+  PRIMARY KEY (pokemon_species_id),
+  FOREIGN KEY(pokemon_species_id) REFERENCES pokemon_species (id),
+  FOREIGN KEY(move_id) REFERENCES moves (id)
+);
+
+CREATE TABLE conquest_max_links (
+  warrior_rank_id INTEGER NOT NULL,
+  pokemon_species_id INTEGER NOT NULL,
+  max_link INTEGER NOT NULL,
+  PRIMARY KEY (warrior_rank_id, pokemon_species_id),
+  FOREIGN KEY(warrior_rank_id) REFERENCES conquest_warrior_ranks (id),
+  FOREIGN KEY(pokemon_species_id) REFERENCES pokemon_species (id)
 );
 
 CREATE TABLE pokemon_egg_groups (
